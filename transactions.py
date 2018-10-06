@@ -48,8 +48,7 @@ class Transactions(MutableSequence):
     def __getitem__(self, index):
         return self.transactions.__getitem__(index - 1)
 
-    def check_all(self):
-        pass
 
-    def compute_last_hash(self):
-        pass
+def check_transaction(grid: MultiCircuit, V0, S0, transaction: Transaction):
+
+    pass
