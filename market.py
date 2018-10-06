@@ -1,52 +1,25 @@
-from enum import Enum
+
 from matplotlib import pyplot as plt
 import numpy as np
 import pulp
 from itertools import product
 
-
-class BidType (Enum):
-    obligatoria = 1,
-    gestionable = 2,
-    prescindible = 3
-
-
-class Bid:
-    def __init__(self, bid_type: BidType, energy_mw_, price_):
-        self.tipo = bid_type
-        self.energy_mw = energy_mw_
-        self.price = price_
-
-
-class Consumer:
-
-    def generate_bids(self):
-        return self.consumer_bids
-
-    def __init__(self, id_, consumer_bids_):
-        self.id = id_
-        self.consumer_bids = consumer_bids_
-
-
-class Generator:
-
-    def __init__(self, id_, energy_mw_, price_):
-        self.id = id_
-        self.energy_mw = energy_mw_
-        self.price = price_
-
-    def generate_bids(self):
-        return [Bid(BidType.obligatoria, self.energy_mw, self.price) ]
+from transactions import Transaction, Transactions
+from actors import ActorsGroup
 
 
 class Market:
 
-    def __init__(self, generation_bids, demand_bids):
+    def __init__(self, actors_group: ActorsGroup):
         """
         Market constructor
         :param generation_bids:
         :param demand_bids:
         """
+
+        generation_bids = actors_group.get_generator_bids()
+
+        demand_bids = actors_group.get_consumer_bids()
 
         # sort by price
         self.generation_bids = sorted(generation_bids, key=lambda x: x.price, reverse=False)
@@ -72,40 +45,61 @@ class Market:
 
         alpha = np.empty((ni, nj), dtype=object)
 
-        # objective function
-        f = 0
+        # declare alpha
         for i, j in product(range(ni), range(nj)):
             alpha[i, j] = pulp.LpVariable('alpha_' + str(i) + '_' + str(j), 0, 1)
 
-            f += self.demand_bids[i].energy_mw * alpha[i, j] * self.generation_bids[j].price
+        gen_slack = np.empty(nj, dtype=object)
+        for j in range(nj):
+            gen_slack[j] = pulp.LpVariable('gen_slack_' + str(j))
 
-        prob += f
+        # objective function
+        f = 0
+        for i, j in product(range(ni), range(nj)):
+            f += self.demand_bids[i].energy_mw * alpha[i, j] * self.generation_bids[j].price
+        prob += f #+ sum(gen_slack)
+
+        #
         for j in range(nj):
             d_alpha = 0
             for i in range(ni):
                 d_alpha += self.demand_bids[i].energy_mw * alpha[i, j]
-            prob += pulp.LpConstraint(d_alpha <= self.generation_bids[j].price)
+            prob += (d_alpha <= self.generation_bids[j].energy_mw )#+ gen_slack[j])
 
+        # sum of alpha per demand contract must be one
+        for i in range(ni):
+            prob += (sum(alpha[i, :]) == 1.0)
 
-
-        for j in range(nj):
-            d_alpha = 0
-            for i in range(ni):
-                d_alpha += alpha[i, j]
-            prob += pulp.LpConstraint(d_alpha == 1.0)
-
-
-
+        # solve
         prob.solve()
         prob.writeLP('problem.lp')
+        prob.writeMPS('problem.mps')
         print("Status:", pulp.LpStatus[prob.status], prob.status)
 
+        #  -------------------------------------------------------------------------------------------------------------
+        #  Generate the transactions
+
+        transactions = Transactions()
 
         # problem solved
         for i, j in product(range(ni), range(nj)):
+            id_gen = self.generation_bids[j].id
+            id_demnd = self.demand_bids[i].id
+            demand = self.demand_bids[i].energy_mw
+            price = self.generation_bids[j].price
             val = alpha[i, j].value()
-            if val > 0:
-                print('demand ', i, 'generation ', j, 'alpha', val)
+            if val != 0:
+                print(id_demnd, 'buys from', id_gen, 'alpha', val)
+                tr = Transaction(bid_id=str(id_gen) + '_' + str(id_demnd),
+                                 seller_id=id_gen,
+                                 buyer_id=id_demnd,
+                                 energy_amount=val * demand,
+                                 price=price,
+                                 bid_type=self.demand_bids[i].bid_type)
+                transactions.append(tr)
+
+        return sorted(transactions, key=lambda x: x.bid_type, reverse=False)
+
 
     def plot(self):
 
@@ -116,33 +110,6 @@ class Market:
         ax.plot(self.demand_bids[0] - self.demand_aggregated_price, label='Demand bids')
 
 
-if __name__ == '__main__':
 
-    consumidor_1 = Consumer(1, [Bid(BidType.obligatoria, 10, 200),
-                                Bid(BidType.gestionable, 30, 25),
-                                Bid(BidType.prescindible, 50, 5)])
-
-    consumidor_2 = Consumer(2, [Bid(BidType.obligatoria, 50, 200),
-                                Bid(BidType.gestionable, 30, 25),
-                                Bid(BidType.prescindible, 50, 5)])
-
-    generator_1 = Generator(1, energy_mw_=10, price_=100)
-    generator_2 = Generator(2, energy_mw_=20, price_=20)
-    generator_3 = Generator(3, energy_mw_=100000000, price_=100)
-
-    consumer_list = [ consumidor_1, consumidor_2 ]
-    generator_list = [ generator_1, generator_2, generator_3 ]
-
-    consumer_bids = []
-    for consumer in consumer_list:
-        consumer_bids += consumer.generate_bids()
-
-    generator_bids = []
-    for generator in generator_list:
-        generator_bids += generator.generate_bids()
-
-    market = Market(generation_bids=generator_bids, demand_bids=consumer_bids)
-
-    market.bid_matching()
 
 
