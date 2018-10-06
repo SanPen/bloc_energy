@@ -24,6 +24,9 @@ class Consumer:
         self.id = id_
 
 
+
+
+
 class Generator:
 
     def __init__(self, id_, energy_mw_, prize_):
