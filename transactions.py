@@ -1,6 +1,6 @@
 from collections import MutableSequence
 from GridCal.Engine.All import *
-from casacion import BidType
+from market import BidType
 
 
 class Transaction:
