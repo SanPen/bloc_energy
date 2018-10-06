@@ -1,6 +1,6 @@
 from collections import MutableSequence
-from GridCal.Engine.All import *
-from market import BidType
+# from GridCal.Engine.All import *
+from bidding import BidType
 
 
 class Transaction:
@@ -26,9 +26,16 @@ class Transaction:
 
         self.price = price
 
-        self.bid_type = bid_type
+        # TODO: Review this WTF
+        try:
+            self.bid_type = bid_type.value[0]
+        except:
+            self.bid_type = bid_type.value
 
         self.hash = hash
+
+    def __le__(self, other):
+        return self.bid_type < other.bid_type
 
 
 class Transactions(MutableSequence):
@@ -59,12 +66,12 @@ class Transactions(MutableSequence):
         return self.transactions.__getitem__(index - 1)
 
 
-def check_transaction(grid: MultiCircuit, transaction: Transaction):
-
-    options = PowerFlowOptions()
-
-    pf = PowerFlow(grid, options)
-
-    pf.run()
-
-    results = pf.results
+# def check_transaction(grid: MultiCircuit, transaction: Transaction):
+#
+#     options = PowerFlowOptions()
+#
+#     pf = PowerFlow(grid, options)
+#
+#     pf.run()
+#
+#     results = pf.results
