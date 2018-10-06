@@ -1,4 +1,4 @@
-import collections
+from collections import MutableSequence
 from GridCal.Engine.All import *
 
 
@@ -21,16 +21,17 @@ class Transaction:
         self.hash = hash
 
 
-class Transactions(collections.MutableSequence):
+class Transactions(MutableSequence):
     """
     Class to store he transactions
     """
 
-    def __init__(self, l=list()):
-        if type(l) is not list:
+    def __init__(self, lst=list()):
+
+        if type(lst) is not list:
             raise ValueError()
 
-        self.transactions = l
+        self.transactions = lst
 
     def __len__(self):
         return len(self.transactions)
