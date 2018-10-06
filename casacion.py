@@ -1,15 +1,15 @@
 from enum import Enum
 
 
-class Tipo (Enum):
-    obligatoria = 1
-    gestionable = 2
+class BidType (Enum):
+    obligatoria = 1,
+    gestionable = 2,
     prescindible = 3
 
 
 class Bid:
-    def __init__(self, tipo_, energy_mw_, prize_):
-        self.tipo = tipo_
+    def __init__(self, bid_type: BidType, energy_mw_, prize_):
+        self.tipo = bid_type
         self.energy_mw = energy_mw_
         self.prize = prize_
 
@@ -43,8 +43,14 @@ class Casacion:
 
 if __name__ == '__main__':
 
-    consumidor_1 = Consumer([Bid(1, 10, 200), Bid(2, 30, 25), Bid(3, 50, 5)])
-    consumidor_2 = Consumer([Bid(1, 50, 200), Bid(2, 30, 25), Bid(3, 50, 5)])
+    consumidor_1 = Consumer([Bid(BidType.obligatoria, 10, 200),
+                             Bid(BidType.gestionable, 30, 25),
+                             Bid(BidType.prescindible, 50, 5)])
+
+    consumidor_2 = Consumer([Bid(BidType.obligatoria, 50, 200),
+                             Bid(BidType.gestionable, 30, 25),
+                             Bid(BidType.prescindible, 50, 5)])
+
     generator_1 = Generator(10, 100)
     generator_2 = Generator(20, 20)
     generator_3 = Generator(30, 1e20)

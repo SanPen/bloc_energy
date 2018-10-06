@@ -1,11 +1,21 @@
 from collections import MutableSequence
 from GridCal.Engine.All import *
+from casacion import BidType
 
 
 class Transaction:
 
-    def __init__(self, bid_id, seller_id, buyer_id, energy_amount, price, tipology, hash):
-
+    def __init__(self, bid_id, seller_id, buyer_id, energy_amount, price, bid_type: BidType, hash=None):
+        """
+        Power Transaction
+        :param bid_id:
+        :param seller_id:
+        :param buyer_id:
+        :param energy_amount: amount of energy (in MWh)
+        :param price: amount of price (€ / MWh)
+        :param bid_type:
+        :param hash: computed hash function
+        """
         self.bid_id = bid_id
 
         self.seller_id = seller_id
@@ -16,14 +26,14 @@ class Transaction:
 
         self.price = price
 
-        self.tipology = tipology
+        self.bid_type = bid_type
 
         self.hash = hash
 
 
 class Transactions(MutableSequence):
     """
-    Class to store he transactions
+    Class to store the transactions
     """
 
     def __init__(self, lst=list()):
@@ -49,6 +59,12 @@ class Transactions(MutableSequence):
         return self.transactions.__getitem__(index - 1)
 
 
-def check_transaction(grid: MultiCircuit, V0, S0, transaction: Transaction):
+def check_transaction(grid: MultiCircuit, transaction: Transaction):
 
-    pass
+    options = PowerFlowOptions()
+
+    pf = PowerFlow(grid, options)
+
+    pf.run()
+
+    results = pf.results
