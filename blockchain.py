@@ -121,7 +121,7 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    def new_transaction(self, sender, recipient, amount):
+    def new_transaction(self, sender, recipient, energy_amount, price, bid_type, electric_hash):
         """
         Creates a new transaction to go into the next mined Block
 
@@ -133,7 +133,10 @@ class Blockchain:
         self.current_transactions.append({
             'sender': sender,
             'recipient': recipient,
-            'amount': amount,
+            'energy_amount': energy_amount,
+            'price': price,
+            'bid_type': bid_type,
+            'electric_hash': electric_hash
         })
 
         return self.last_block['index'] + 1
@@ -154,41 +157,34 @@ class Blockchain:
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
-    def proof_of_work(self, last_block):
+    def proof_of_work(self, current_transactions):
         """
         Simple Proof of Work Algorithm:
 
          - Find a number p' such that hash(pp') contains leading 4 zeroes
          - Where p is the previous proof, and p' is the new proof
-         
-        :param last_block: <dict> last Block
+
+        :param block: <dict> Block
         :return: <int>
         """
 
-        last_proof = last_block['proof']
-        last_hash = self.hash(last_block)
+        print( current_transactions )
 
-        proof = 0
-        while self.valid_proof(last_proof, proof, last_hash) is False:
-            proof += 1
+        proof = current_transactions[-1]['electric_hash']
 
         return proof
 
     @staticmethod
-    def valid_proof(last_proof, proof, last_hash):
+    def valid_proof( proof ):
         """
         Validates the Proof
 
-        :param last_proof: <int> Previous Proof
         :param proof: <int> Current Proof
-        :param last_hash: <str> The hash of the Previous Block
         :return: <bool> True if correct, False if not.
 
         """
 
-        guess = f'{last_proof}{proof}{last_hash}'.encode()
-        guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:4] == "0000"
+        return proof != None
 
 
 # Instantiate the Node
@@ -205,19 +201,23 @@ blockchain = Blockchain()
 def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
-    proof = blockchain.proof_of_work(last_block)
+    print('proof of work')
+    proof = blockchain.proof_of_work(blockchain.current_transactions)
+
+    if( proof is None ):
+        response = {
+            'message': "Mining is not correct",
+        }
+        return jsonify(response), 200
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
-    blockchain.new_transaction(
-        sender="0",
-        recipient=node_identifier,
-        amount=1,
-    )
 
+    print('compute hash')
     # Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
-    block = blockchain.new_block(proof, previous_hash)
+    if(previous_hash != None):
+        block = blockchain.new_block(proof, previous_hash)
 
     response = {
         'message': "New Block Forged",
@@ -234,12 +234,14 @@ def new_transaction():
     values = request.get_json()
 
     # Check that the required fields are in the POST'ed data
-    required = ['sender', 'recipient', 'amount']
+    required = ['sender', 'recipient', 'energy_amount', 'price', 'bid_type', 'electric_hash']
     if not all(k in values for k in required):
         return 'Missing values', 400
 
     # Create a new Transaction
-    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+    print('calling to new_transaction')
+    index = blockchain.new_transaction(values['sender'], values['recipient'], values['energy_amount'],
+            values['price'], values['bid_type'], values['electric_hash'])
 
     response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201

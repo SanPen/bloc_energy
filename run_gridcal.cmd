@@ -1,0 +1,1 @@
+C:\Users\rcontreras\AppData\Local\Continuum\anaconda3\python.exe -c "from GridCal.ExecuteGridCal import run; run()"
