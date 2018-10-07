@@ -3,7 +3,7 @@ import requests
 
 # r = requests.get('https://api.spotify.com/v1/search?type=artist&q=snoop')
 # r.json()
-
+import pandas as pd
 import requests
 import urllib.request
 import json
@@ -117,8 +117,8 @@ generator_3 = Generator('Gen3')
 gen3bid = GeneratorFactory('solargen.csv', scale_factor=300, max_price=103).getbid()
 generator_1.bids = [[0, gen1bid[1], gen1bid[2]]]
 headergen3 = {'id': 'Gen3',
-            'grid_id':  agent_id_to_grid_id['Gen3'],
-            'bids': generator_1.bids }
+              'grid_id':  agent_id_to_grid_id['Gen3'],
+              'bids': generator_1.bids }
 requests.post('http://127.0.0.1:5000/transactions/addgenerator', json=json.dumps(headergen3))
 
 print('Exito posting consumer and generatos to blockchain')
@@ -137,4 +137,12 @@ url = 'http://localhost:5000/chain'
 
 response = requests.get(url=url)
 
+chain = json.loads(response._content)['chain']
+
 print(response)
+print(json.dumps(chain, indent=True))
+
+for i in range(len(chain)):
+    df = pd.DataFrame(chain[i]['transactions'])
+    print('block', i)
+    print(df)
