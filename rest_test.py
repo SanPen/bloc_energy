@@ -24,9 +24,6 @@ header = {'id': 'Consumer1',
          'grid_id': 'Load@Bloque de pisos',
          'bids': bids}
 
-# req = urllib.request.Request(url='http://127.0.0.1:5000/transactions/addconsumer',
-#                              headers=json.dumps(header),
-#                              method='POST')
 
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header))
 
