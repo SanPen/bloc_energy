@@ -72,7 +72,7 @@ def transaction_checking(grid: MultiCircuit, transactions: Transactions, agent_i
         # if there are no errors
         if hash is not None:
             # modify the transaction, adding a hash based on the voltage
-            transaction.hash = hashlib.sha3_256(pf.results.voltage).hexdigest()
+            transaction.hash = hash
 
             # store the transaction
             final_transactions.append(transaction)
