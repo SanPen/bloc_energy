@@ -6,13 +6,24 @@ from uuid import uuid4
 
 import requests
 from flask import Flask, jsonify, request
+from transactions import Transaction, Transactions
+from grid import transaction_mine, transaction_checking
+from GridCal.Engine.CalculationEngine import MultiCircuit
 
 
 class Blockchain:
-    def __init__(self):
-        self.current_transactions = []
+
+    def __init__(self, agent_id_to_grid_id, fname='Grid.xlsx', dt=1):
+        self.current_transactions = Transactions()
         self.chain = []
         self.nodes = set()
+
+        self.agent_id_to_grid_id = agent_id_to_grid_id
+
+        self.dt = dt
+
+        self.grid = MultiCircuit()
+        self.grid.load_file(fname)
 
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
@@ -130,14 +141,21 @@ class Blockchain:
         :param amount: Amount
         :return: The index of the Block that will hold this transaction
         """
-        self.current_transactions.append({
-            'sender': sender,
-            'recipient': recipient,
-            'energy_amount': energy_amount,
-            'price': price,
-            'bid_type': bid_type,
-            'electric_hash': electric_hash
-        })
+
+        tr = Transaction(bid_id=len(self.current_transactions),   # this may be repeated but it is only used to print
+                         seller_id=sender, buyer_id=recipient, energy_amount=energy_amount,
+                         price=price, bid_type=bid_type, bid_hash=electric_hash)
+
+        # self.current_transactions.append({
+        #     'sender': sender,
+        #     'recipient': recipient,
+        #     'energy_amount': energy_amount,
+        #     'price': price,
+        #     'bid_type': bid_type,
+        #     'electric_hash': electric_hash
+        # })
+
+        self.current_transactions.append(tr)
 
         return self.last_block['index'] + 1
 
@@ -194,7 +212,17 @@ app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
-blockchain = Blockchain()
+# matching dictionary
+agent_id_to_grid_id = {'Consumer1': 'Load@Bloque de pisos',
+                       'Consumer2': 'Load@Bus 3',
+                       'Consumer3': 'Load@fabrica',
+                       'Consumer4': 'Load@Bus 5',
+                       'Consumer5': 'Load@Bus 7',
+                       'Consumer6': 'Load@compañia',
+                       'Gen1': 'gen_huerto_solar',
+                       'Gen2': 'gen_bus_5',
+                       'Gen3': 'gen_bloque_pisos'}
+blockchain = Blockchain(agent_id_to_grid_id, fname='Grid.xlsx', dt=1)
 
 
 @app.route('/mine', methods=['GET'])
@@ -202,7 +230,10 @@ def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
     print('proof of work')
-    proof = blockchain.proof_of_work(blockchain.current_transactions)
+    # proof = blockchain.proof_of_work(blockchain.current_transactions)
+
+    proof = transaction_checking(blockchain.grid, blockchain.current_transactions,
+                                 blockchain.agent_id_to_grid_id, dt=blockchain.dt)
 
     if( proof is None ):
         response = {
