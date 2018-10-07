@@ -65,7 +65,7 @@ class ConsumerFactory:
                 keysnotodrop.append(key)
         print('dropped', keys_drop, 'useful', keysnotodrop)
         self.mean.drop(keys_drop, axis=1, inplace=True)
-        self.mean.plot()
+        # self.mean.plot()
        # plt.show()
 
    def agregate(self):

@@ -24,7 +24,7 @@ class ActorBid:
 
 class Bid:
 
-    def __init__(self, actor_id, bid: ActorBid):
+    def __init__(self, actor_id, bid):
         """
 
         :param bid_type:
@@ -32,9 +32,9 @@ class Bid:
         :param price_:
         """
         self.id = actor_id
-        self.bid_type = bid.bid_type
-        self.energy_mw = bid.energy_mw
-        self.price = bid.price
+        self.bid_type = bid[0]
+        self.energy_mw = bid[1]
+        self.price = bid[2]
 
     def __str__(self):
         return str(self.id) + ' e:' + str(self.energy_mw) + ' pr:' + str(self.price)

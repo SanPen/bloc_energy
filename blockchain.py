@@ -230,12 +230,14 @@ def mine():
     last_block = blockchain.last_block
     print('proof of work')
 
+    transactions = blockchain.market.bid_matching()
+
     # declare the final transactions list
-    final_transactions = Transactions()
+    blockchain.current_transactions = Transactions()
 
     proof = None
 
-    for transaction in blockchain.current_transactions:
+    for transaction in transactions:
 
         hash = transaction_mine(blockchain.grid, transaction, agent_id_to_grid_id, dt=1)
 
@@ -245,7 +247,7 @@ def mine():
             transaction.hash = hash
 
             # store the transaction
-            final_transactions.append(transaction)
+            blockchain.current_transactions.append(transaction)
 
             proof = hash
         else:
@@ -254,7 +256,7 @@ def mine():
 
     if proof is None:
         response = {
-            'message': "Mining is not correct",
+            'message': "Mining is not correct !!!!!",
         }
         return jsonify(response), 200
 
@@ -264,7 +266,7 @@ def mine():
     print('compute hash')
     # Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
-    if(previous_hash != None):
+    if previous_hash is not None:
         block = blockchain.new_block(proof, previous_hash)
 
     response = {
@@ -347,8 +349,25 @@ def new_transaction():
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
+
+    chain = list()
+    for block in blockchain.chain:
+
+        # waka = str(block['index']) + \
+        #        str(block['timestamp']) + \
+        #        str(block['proof']) + \
+        #        str(block['previous_hash']) + \
+        #        str([j.bid_id for j in block['transactions']])
+
+        bl = {'index': block['index'],
+              'proof': block['proof'],
+              'prev hash': block['previous_hash'],
+              'transactions': [[j.bid_id, j.energy_amount, j.price ] for j in block['transactions']] }
+
+        chain.append(bl)
+
     response = {
-        'chain': blockchain.chain,
+        'chain': chain,
         'length': len(blockchain.chain),
     }
     return jsonify(response), 200

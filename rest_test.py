@@ -29,7 +29,7 @@ bids = [[1, consumer1bids[0][0][1], consumer1bids[0][0][2]],
         [3,  consumer1bids[2][0][1], consumer1bids[2][0][2]]]
 
 header = {'id': 'Consumer1',
-         'grid_id': agent_id_to_grid_id['Costumer1'],
+         'grid_id': agent_id_to_grid_id['Consumer1'],
          'bids': bids}
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header))
 
@@ -41,7 +41,7 @@ bids2 = [[1, consumer2bids[0][0][1], consumer2bids[0][0][2]],
         [3,  consumer2bids[2][0][1], consumer2bids[2][0][2]]]
 
 header2 = {'id': 'Consumer2',
-         'grid_id':  agent_id_to_grid_id['Costumer2'],
+         'grid_id':  agent_id_to_grid_id['Consumer2'],
          'bids': bids2}
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header2))
 
@@ -52,7 +52,7 @@ bids3 = [[1, consumer2bids[0][0][2], consumer2bids[0][0][2]],
         [3,  consumer2bids[2][0][2], consumer2bids[2][0][2]]]
 
 header3 = {'id': 'Consumer3',
-         'grid_id':  agent_id_to_grid_id['Costumer3'],
+         'grid_id':  agent_id_to_grid_id['Consumer3'],
          'bids': bids3}
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header3))
 
@@ -63,7 +63,7 @@ bids4 = [[1, consumer2bids[0][0][2], consumer2bids[0][0][2]],
         [3,  consumer2bids[2][0][2], consumer2bids[2][0][2]]]
 
 header4 = {'id': 'Consumer4',
-         'grid_id':  agent_id_to_grid_id['Costumer4'],
+         'grid_id':  agent_id_to_grid_id['Consumer4'],
          'bids': bids4}
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header4))
 
@@ -74,7 +74,7 @@ bids5 = [[1, consumer2bids[0][0][2], consumer2bids[0][0][2]],
         [3,  consumer2bids[2][0][2], consumer2bids[2][0][2]]]
 
 header5 = {'id': 'Consumer5',
-         'grid_id':  agent_id_to_grid_id['Costumer5'],
+         'grid_id':  agent_id_to_grid_id['Consumer5'],
          'bids': bids5}
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header5))
 
@@ -86,7 +86,7 @@ bids6 = [[1, consumer2bids[0][0][2], consumer2bids[0][0][2]],
         [3,  consumer2bids[2][0][2], consumer2bids[2][0][2]]]
 
 header6 = {'id': 'Consumer6',
-         'grid_id':  agent_id_to_grid_id['Costumer6'],
+         'grid_id':  agent_id_to_grid_id['Consumer6'],
          'bids': bids6}
 requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(header6))
 
@@ -96,32 +96,45 @@ requests.post('http://127.0.0.1:5000/transactions/addconsumer', json=json.dumps(
 
 generator_1 = Generator('Gen1')
 gen1bid = GeneratorFactory('solargen.csv', scale_factor=50, max_price=100).getbid()
-generator_1.bids = [(0, gen1bid[1], gen1bid[2])]
+generator_1.bids = [[0, gen1bid[1], gen1bid[2]]]
 headergen = {'id': 'Gen1',
-            'grid_id':  agent_id_to_grid_id['Gen1'],
-            'bids': gen1bid}
+             'grid_id':  agent_id_to_grid_id['Gen1'],
+             'bids': generator_1.bids }
 requests.post('http://127.0.0.1:5000/transactions/addgenerator', json=json.dumps(headergen))
 
 
 generator_2 = Generator('Gen2')
 # generator_2.bids = [ActorBid(BidType.Compulsory, energy_mw_=20, price_=20)]
 gen2bid = GeneratorFactory('solargen.csv', scale_factor=5.5, max_price=95).getbid()
-generator_2.bids = [(0, gen2bid[1], gen2bid[2])]
+generator_2.bids = [[0, gen2bid[1], gen2bid[2]]]
 headergen2 = {'id': 'Gen2',
             'grid_id':  agent_id_to_grid_id['Gen2'],
-            'bids': gen2bid}
+            'bids': generator_2.bids}
 requests.post('http://127.0.0.1:5000/transactions/addgenerator', json=json.dumps(headergen2))
 
 generator_3 = Generator('Gen3')
 # generator_3.bids = [ActorBid(BidType.Compulsory, energy_mw_=10000, price_=100)]
 gen3bid = GeneratorFactory('solargen.csv', scale_factor=300, max_price=103).getbid()
-generator_1.bids = [(0, gen1bid[1], gen1bid[2])]
+generator_1.bids = [[0, gen1bid[1], gen1bid[2]]]
 headergen3 = {'id': 'Gen3',
             'grid_id':  agent_id_to_grid_id['Gen3'],
-            'bids': gen3bid}
+            'bids': generator_1.bids }
 requests.post('http://127.0.0.1:5000/transactions/addgenerator', json=json.dumps(headergen3))
 
-# res = urllib.request.urlopen(req, timeout=5)
-#
-# print(res.status)
-# print(res.reason)
+print('Exito posting consumer and generatos to blockchain')
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Mine
+url = 'http://localhost:5000/mine'
+
+response = requests.get(url=url)
+
+print(response)
+# r--------------------------------------
+
+url = 'http://localhost:5000/chain'
+
+response = requests.get(url=url)
+
+print(response)
