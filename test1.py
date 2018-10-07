@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     generator_2 = Generator('Gen2')
     #generator_2.bids = [ActorBid(BidType.Compulsory, energy_mw_=20, price_=20)]
-    gen2bid = GeneratorFactory('solargen.csv', scale_factor=10, max_price=20).getbid()
+    gen2bid = GeneratorFactory('solargen.csv', scale_factor=5.5, max_price=95).getbid()
     generator_2.bids = [ActorBid(BidType.Compulsory, gen2bid[1], gen2bid[2])]
 
     generator_3 = Generator('Gen3')
