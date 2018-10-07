@@ -6,29 +6,43 @@ import matplotlib.pyplot as plt
 
 
 class ConsumerFactory:
+
     # Mandatorty
     # Optional
     # Flexible
 
-   def __init__(self, scale_factor, reparto = None , fpath = None,  maximum_price = 0.08):
+   def __init__(self, scale_factor, reparto=None , fpath=None, maximum_price=0.08):
+        """
+
+        :param scale_factor:
+        :param reparto:
+        :param fpath:
+        :param maximum_price:
+        """
         self.scalefactor = 0
-        if reparto == None :
+
+        if fpath is None:
             self.fpath = "D:\\BlockChain\\RESIDENTIAL_LOAD_DATA_E_PLUS_OUTPUT\\BASE\\USA_MA_Boston-Logan.Intl.AP.725090_TMY3_BASE.csv"
 
-        if reparto == None :
-            self.reparto = {'Electricity:Facility [kW](Hourly)':(100,0,0),
-                        'Heating:Electricity [kW](Hourly)':(40,30,30),
-                        'Cooling:Electricity [kW](Hourly)':(20,50,30),
-                        'HVACFan:Fans:Electricity [kW](Hourly)':(10,10,100),
-                        'Electricity:HVAC [kW](Hourly)':(10,10,80),
-                        'Fans:Electricity [kW](Hourly)':(60,30,20),
-                        'General:InteriorLights:Electricity [kW](Hourly)':(100,0,0),
-                        'General:ExteriorLights:Electricity [kW](Hourly)':(20,70,10),
-                        'Appl:InteriorEquipment:Electricity [kW](Hourly)':(0,50,50),
-                        'Misc:InteriorEquipment:Electricity [kW](Hourly)':(0,100,0)}
+        if reparto is None:
+            self.reparto = {'Electricity:Facility [kW](Hourly)': (100, 0, 0),
+                            'Heating:Electricity [kW](Hourly)': (40, 30, 30),
+                            'Cooling:Electricity [kW](Hourly)': (20, 50, 30),
+                            'HVACFan:Fans:Electricity [kW](Hourly)': (10, 10, 100),
+                            'Electricity:HVAC [kW](Hourly)': (10, 10, 80),
+                            'Fans:Electricity [kW](Hourly)': (60, 30, 20),
+                            'General:InteriorLights:Electricity [kW](Hourly)': (100, 0, 0),
+                            'General:ExteriorLights:Electricity [kW](Hourly)': (20, 70, 10),
+                            'Appl:InteriorEquipment:Electricity [kW](Hourly)': (0, 50, 50),
+                            'Misc:InteriorEquipment:Electricity [kW](Hourly)': (0, 100, 0)}
+
         self.bidprices = [maximum_price, maximum_price*0.5, maximum_price*0.2]
 
    def importcsv(self):
+        """
+
+        :return:
+        """
         dateparse = lambda x: pd.datetime.strptime(x, ' %m/%d %H:%M:%S')
         self.profile = pd.read_csv(self.fpath)
         new_origin= datetime.datetime.now().replace(month=1,day=1,hour=0,minute=0,second=0,microsecond=0)
@@ -50,6 +64,7 @@ class ConsumerFactory:
         self.mean.drop(keys_drop, axis=1, inplace=True)
         self.mean.plot()
        # plt.show()
+
    def agregate(self):
         mandatory_data = [0]*24
         optional = [0]*24
@@ -84,15 +99,8 @@ class ConsumerFactory:
         return {'mandatory': mandatory, 'optional': optional, 'flexible': flexible}
 
 
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
+
     filetest = "D:\\BlockChain\\RESIDENTIAL_LOAD_DATA_E_PLUS_OUTPUT\\BASE\\USA_MA_Boston-Logan.Intl.AP.725090_TMY3_BASE.csv"
     a = ConsumerFactory(fpath=filetest, scale_factor=1)
     a.importcsv()
