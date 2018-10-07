@@ -1,7 +1,7 @@
 from actors import Consumer, Generator, ActorsGroup
 from market import Market
 from bidding import BidType, ActorBid
-
+from grid import MultiCircuit, transaction_checking
 
 if __name__ == '__main__':
 
@@ -36,3 +36,14 @@ if __name__ == '__main__':
 
     transactions = market.bid_matching()
 
+    # load grid
+    grid = MultiCircuit()
+    grid.load_file('Grid.xlsx')
+
+    agent_id_to_grid_id = {'Consumer1': '',
+                           'Consumer2': '',
+                           'Gen1': '',
+                           'Gen2': '',
+                           'Gen3': ''}
+
+    transaction_checking(grid=grid, transactions=transactions, agent_id_to_grid_id=agent_id_to_grid_id)
