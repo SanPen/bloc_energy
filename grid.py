@@ -4,12 +4,13 @@ import numpy as np
 import hashlib
 
 
-def transaction_checking(grid: MultiCircuit, transactions: Transactions, agent_id_to_grid_id):
+def transaction_checking(grid: MultiCircuit, transactions: Transactions, agent_id_to_grid_id, dt=1):
     """
-
-    :param grid:
-    :param transactions:
-    :param agent_id_to_grid_id:
+    Function that checks the transactions with electrical computations
+    :param grid: GridCal grid Object
+    :param transactions: Transactions object
+    :param agent_id_to_grid_id: dictionary to relate the agent's id with the grid object's id
+    :param dt: market interval in hours
     :return:
     """
 
@@ -22,13 +23,10 @@ def transaction_checking(grid: MultiCircuit, transactions: Transactions, agent_i
     load_dict = {load_ids[i]: loads[i] for i in range(len(loads))}
     gen_dict = {gen_ids[i]: gens[i] for i in range(len(gens))}
 
+    # declare the power flow options
     options = PowerFlowOptions()
 
-    results = list()
-
-    numerical_circuit = grid.compile()
-    calculation_inputs = numerical_circuit.compute()
-
+    # declare the final transactions list
     final_transactions = Transactions()
 
     for transaction in transactions:
@@ -40,22 +38,33 @@ def transaction_checking(grid: MultiCircuit, transactions: Transactions, agent_i
         gen = gen_dict[gen_id]
 
         # add power
-        load.S = -complex(transaction.energy_amount, load.S.imag)
-        gen.P = transaction.energy_amount
+        load.S = -complex(transaction.energy_amount / dt, load.S.imag)
+        gen.P = transaction.energy_amount / dt
 
         # run the calculation
         pf = PowerFlow(grid, options)
         pf.run()
 
-        # gather results
-        results.append([pf.results.voltage, pf.results.loading])
+        # errors = pf.results.check_limits(F=calculation_inputs.F, T=calculation_inputs.T,
+        #                                  Vmax=calculation_inputs.Vmax, Vmin=calculation_inputs.Vmin)
 
-        errors = pf.results.check_limits(F=calculation_inputs.F, T=calculation_inputs.T,
-                                         Vmax=calculation_inputs.Vmax, Vmin=calculation_inputs.Vmin)
+        # Compute the error number
+        v = np.abs(pf.results.voltage)
+        nerr = len(np.where(v > 1.1)[0])
+        nerr += len(np.where(v < 0.9)[0])
+        nerr += len(np.where(pf.results.loading > 1)[0])
 
-        if errors == 0:
-            transaction.hash = hashlib.sha3_256(errors).hexdigest()
+        # if there are no errors
+        if nerr == 0:
+            # modify the transaction, adding a hash based on the voltage
+            transaction.hash = hashlib.sha3_256(pf.results.voltage).hexdigest()
+
+            # store the transaction
             final_transactions.append(transaction)
+        else:
+            # since the transactions are sorted, if a critical state is found the rest are curtailed
+            return final_transactions
 
+    # return the approved transactions
     return final_transactions
 
