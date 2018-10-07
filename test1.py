@@ -1,7 +1,7 @@
 from actors import Consumer, Generator, ActorsGroup
 from market import Market
 from bidding import BidType, ActorBid
-from grid import MultiCircuit, transaction_checking
+from grid import MultiCircuit, transaction_checking, generate_checked_transactions
 
 if __name__ == '__main__':
 
@@ -46,4 +46,5 @@ if __name__ == '__main__':
                            'Gen2': '',
                            'Gen3': ''}
 
-    transaction_checking(grid=grid, transactions=transactions, agent_id_to_grid_id=agent_id_to_grid_id)
+    new_transactions = transaction_checking(grid=grid, transactions=transactions,
+                                            agent_id_to_grid_id=agent_id_to_grid_id)

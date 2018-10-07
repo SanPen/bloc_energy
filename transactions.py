@@ -1,5 +1,4 @@
 from collections import MutableSequence
-# from GridCal.Engine.All import *
 from bidding import BidType
 
 
@@ -66,12 +65,3 @@ class Transactions(MutableSequence):
         return self.transactions.__getitem__(index - 1)
 
 
-# def check_transaction(grid: MultiCircuit, transaction: Transaction):
-#
-#     options = PowerFlowOptions()
-#
-#     pf = PowerFlow(grid, options)
-#
-#     pf.run()
-#
-#     results = pf.results
