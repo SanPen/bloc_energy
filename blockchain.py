@@ -8,6 +8,8 @@ import requests
 from flask import Flask, jsonify, request
 from transactions import Transaction, Transactions
 from grid import transaction_mine, transaction_checking
+from market import Market
+from actors import ActorsGroup, Consumer, Generator
 from GridCal.Engine.CalculationEngine import MultiCircuit
 
 
@@ -19,6 +21,10 @@ class Blockchain:
         self.nodes = set()
 
         self.agent_id_to_grid_id = agent_id_to_grid_id
+
+        self.actors_group = ActorsGroup()
+
+        self.market = Market(actors_group=self.actors_group)
 
         self.dt = dt
 
@@ -172,25 +178,18 @@ class Blockchain:
         """
 
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
-        block_string = json.dumps(block, sort_keys=True).encode()
-        return hashlib.sha256(block_string).hexdigest()
+        # block_string = json.dumps(block, sort_keys=True).encode()
+        block_string = str(block['index']) + \
+                       str(block['timestamp']) + \
+                       str(block['proof']) + \
+                       str(block['previous_hash']) + \
+                       str([j.hash for j in block['transactions']])
+        # block_string = block.
 
-    def proof_of_work(self, current_transactions):
-        """
-        Simple Proof of Work Algorithm:
+        # block_string = block.to_json()
 
-         - Find a number p' such that hash(pp') contains leading 4 zeroes
-         - Where p is the previous proof, and p' is the new proof
+        return hashlib.sha256(block_string.encode('UTF-8')).hexdigest()
 
-        :param block: <dict> Block
-        :return: <int>
-        """
-
-        print( current_transactions )
-
-        proof = current_transactions[-1]['electric_hash']
-
-        return proof
 
     @staticmethod
     def valid_proof( proof ):
@@ -230,12 +229,30 @@ def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
     print('proof of work')
-    # proof = blockchain.proof_of_work(blockchain.current_transactions)
 
-    proof = transaction_checking(blockchain.grid, blockchain.current_transactions,
-                                 blockchain.agent_id_to_grid_id, dt=blockchain.dt)
+    # declare the final transactions list
+    final_transactions = Transactions()
 
-    if( proof is None ):
+    proof = None
+
+    for transaction in blockchain.current_transactions:
+
+        hash = transaction_mine(blockchain.grid, transaction, agent_id_to_grid_id, dt=1)
+
+        # if there are no errors
+        if hash is not None:
+            # modify the transaction, adding a hash based on the voltage
+            transaction.hash = hash
+
+            # store the transaction
+            final_transactions.append(transaction)
+
+            proof = hash
+        else:
+            # since the transactions are sorted, if a critical state is found the rest are curtailed
+            break
+
+    if proof is None:
         response = {
             'message': "Mining is not correct",
         }
@@ -253,11 +270,61 @@ def mine():
     response = {
         'message': "New Block Forged",
         'index': block['index'],
-        'transactions': block['transactions'],
+        # 'transactions': block['transactions'],
         'proof': block['proof'],
         'previous_hash': block['previous_hash'],
     }
     return jsonify(response), 200
+
+
+@app.route('/transactions/addconsumer', methods=['POST'])
+def add_consumer():
+    values = request.get_json()
+
+    data = json.loads(values)
+
+    # Check that the required fields are in the POST'ed data
+    required = ['id', 'grid_id', 'bids']
+    if not all(k in data.keys() for k in required):
+        return 'Missing values', 400
+
+    # Create a new Transaction
+    print('calling add consumer')
+
+    consumer = Consumer(data['id'])
+    consumer.bids = data['bids']
+
+    agent_id_to_grid_id[data['id']] = data['grid_id']
+
+    blockchain.market.add_consumer(consumer)
+
+    response = {'message': f'Consumer added {consumer.id}'}
+    return jsonify(response), 201
+
+
+@app.route('/transactions/addgenerator', methods=['POST'])
+def add_generator():
+    values = request.get_json()
+
+    data = json.loads(values)
+
+    # Check that the required fields are in the POST'ed data
+    required = ['id', 'grid_id', 'bids']
+    if not all(k in data.keys() for k in required):
+        return 'Missing values', 400
+
+    # Create a new Transaction
+    print('calling add consumer')
+
+    generator = Generator(data['id'])
+    generator.bids = data['bids']
+
+    agent_id_to_grid_id[data['id']] = data['grid_id']
+
+    blockchain.market.add_generator(generator)
+
+    response = {'message': f'Generator added {generator.id}'}
+    return jsonify(response), 201
 
 
 @app.route('/transactions/new', methods=['POST'])
@@ -305,22 +372,22 @@ def register_nodes():
     return jsonify(response), 201
 
 
-@app.route('/nodes/resolve', methods=['GET'])
-def consensus():
-    replaced = blockchain.resolve_conflicts()
-
-    if replaced:
-        response = {
-            'message': 'Our chain was replaced',
-            'new_chain': blockchain.chain
-        }
-    else:
-        response = {
-            'message': 'Our chain is authoritative',
-            'chain': blockchain.chain
-        }
-
-    return jsonify(response), 200
+# @app.route('/nodes/resolve', methods=['GET'])
+# def consensus():
+#     replaced = blockchain.resolve_conflicts()
+#
+#     if replaced:
+#         response = {
+#             'message': 'Our chain was replaced',
+#             'new_chain': blockchain.chain
+#         }
+#     else:
+#         response = {
+#             'message': 'Our chain is authoritative',
+#             'chain': blockchain.chain
+#         }
+#
+#     return jsonify(response), 200
 
 
 if __name__ == '__main__':

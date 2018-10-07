@@ -17,9 +17,32 @@ class Market:
         :param demand_bids:
         """
 
-        generation_bids = actors_group.get_generator_bids()
+        self.actors_group = actors_group
 
-        demand_bids = actors_group.get_consumer_bids()
+        self.generation_bids = list()
+
+        self.demand_bids = list()
+
+    def add_generator(self, elm):
+        """
+
+        :param elm:
+        :return:
+        """
+        self.actors_group.generator_list.append(elm)
+
+    def add_consumer(self, elm):
+        """
+
+        :param elm:
+        :return:
+        """
+        self.actors_group.consumer_list.append(elm)
+
+    def compute(self):
+        generation_bids = self.actors_group.get_generator_bids()
+
+        demand_bids = self.actors_group.get_consumer_bids()
 
         # sort by price
         self.generation_bids = sorted(generation_bids, key=lambda x: x.price, reverse=False)
@@ -27,16 +50,10 @@ class Market:
         # sort by price
         self.demand_bids = sorted(demand_bids, key=lambda x: x.price, reverse=False)
 
-        self.generation_aggregated_price = np.cumsum([elm.price for elm in self.generation_bids])
-
-        self.demand_aggregated_price = np.cumsum([elm.price for elm in self.generation_bids])
-
-    # def bid_matching(self):
-    #
-    #     for p in sorted(self.generation_aggregated_price + self.demand_aggregated_price):
-    #         cum_dem = [ (p.x, p.y) for p in generation_aggregated_price if p.x < p ]
 
     def bid_matching(self):
+
+        self.compute()
 
         prob = pulp.LpProblem("DC optimal power flow", pulp.LpMinimize)
 
@@ -106,8 +123,12 @@ class Market:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.plot(self.generation_aggregated_price, label='Generation bids')
-        ax.plot(self.demand_bids[0] - self.demand_aggregated_price, label='Demand bids')
+        generation_aggregated_price = np.cumsum([elm.price for elm in self.generation_bids])
+
+        demand_aggregated_price = np.cumsum([elm.price for elm in self.generation_bids])
+
+        ax.plot(generation_aggregated_price, label='Generation bids')
+        ax.plot(self.demand_bids[0] - demand_aggregated_price, label='Demand bids')
 
 
 

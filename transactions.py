@@ -1,6 +1,6 @@
 from collections import MutableSequence
 from bidding import BidType
-
+import json
 
 class Transaction:
 
@@ -25,12 +25,22 @@ class Transaction:
 
         self.price = price
 
-        try:
-            self.bid_type = bid_type.value[0]
-        except:
-            self.bid_type = bid_type.value
+        if type(bid_type) is BidType:
+            try:
+                self.bid_type = bid_type.value[0]
+            except:
+                self.bid_type = bid_type.value
+        else:
+            self.bid_type = int(bid_type)
 
         self.hash = bid_hash
+
+    def to_json(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True, indent=4)
+
+    def __str__(self):
+        return self.to_json()
 
     def __le__(self, other):
         return self.bid_type < other.bid_type
@@ -63,4 +73,11 @@ class Transactions(MutableSequence):
     def __getitem__(self, index):
         return self.transactions.__getitem__(index - 1)
 
+    def __str__(self):
 
+        val = ''
+
+        for elm in self.transactions:
+            val += elm.to_json()
+
+        return val

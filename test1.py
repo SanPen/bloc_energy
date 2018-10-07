@@ -64,7 +64,6 @@ if __name__ == '__main__':
     group.add_consumer(consumer_5)
     group.add_consumer(consumer_6)
 
-
     group.add_generator(generator_1)
     group.add_generator(generator_2)
     group.add_generator(generator_3)
