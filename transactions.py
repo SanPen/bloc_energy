@@ -4,7 +4,7 @@ from bidding import BidType
 
 class Transaction:
 
-    def __init__(self, bid_id, seller_id, buyer_id, energy_amount, price, bid_type: BidType, hash=None):
+    def __init__(self, bid_id, seller_id, buyer_id, energy_amount, price, bid_type: BidType, bid_hash=None):
         """
         Power Transaction
         :param bid_id:
@@ -13,7 +13,7 @@ class Transaction:
         :param energy_amount: amount of energy (in MWh)
         :param price: amount of price (€ / MWh)
         :param bid_type:
-        :param hash: computed hash function
+        :param bid_hash: computed hash function
         """
         self.bid_id = bid_id
 
@@ -25,13 +25,12 @@ class Transaction:
 
         self.price = price
 
-        # TODO: Review this WTF
         try:
             self.bid_type = bid_type.value[0]
         except:
             self.bid_type = bid_type.value
 
-        self.hash = hash
+        self.hash = bid_hash
 
     def __le__(self, other):
         return self.bid_type < other.bid_type
